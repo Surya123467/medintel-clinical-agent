@@ -1,9 +1,21 @@
+import io
 from fastapi.testclient import TestClient
+from pypdf import PdfWriter
 from app.main import app
+
 client=TestClient(app)
+
 def token():
     r=client.post('/auth/login',json={'email':'doctor@medintel.demo','password':'doctor123'}); assert r.status_code==200; return r.json()['access_token']
+
 def test_health(): assert client.get('/health').json()['status']=='ok'
 def test_login_rejects_bad_password(): assert client.post('/auth/login',json={'email':'doctor@medintel.demo','password':'x'}).status_code==401
+
 def test_agent_historical_comparison():
     t=token(); r=client.post('/agent',headers={'Authorization':f'Bearer {t}'},json={'mrn':'MRN-1023','message':'Compare latest with previous'}); assert r.status_code==200; data=r.json(); assert 'improved' in data['clinician_summary'].lower(); assert 'compare_historical_reports' in data['tools_used']
+
+def test_pdf_endpoint_rejects_non_pdf():
+    t=token(); r=client.post('/patients/MRN-1023/documents',headers={'Authorization':f'Bearer {t}'},files={'file':('notes.txt',b'hello','text/plain')}); assert r.status_code==400
+
+def test_documents_requires_auth():
+    assert client.get('/patients/MRN-1023/documents').status_code==401
