@@ -10,3 +10,5 @@ langchain-core==0.3.75
 openai==1.107.2
 faiss-cpu==1.12.0
 numpy==2.3.2
+pypdf==6.0.0
+python-multipart==0.0.20
